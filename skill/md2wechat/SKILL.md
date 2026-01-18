@@ -1,23 +1,28 @@
 ---
 name: md2wechat
-description: Convert Markdown articles to WeChat Official Account formatted HTML using AI. Supports beautiful themed layouts (autumn-warm, spring-fresh, ocean-calm) and AI image generation with DashScope. Also supports assisted writing with customizable creator styles (default: Dan Koe - profound, sharp, grounded). Use when user wants to write articles, convert markdown to WeChat format, or publish to WeChat Official Account.
+description: Convert Markdown articles to WeChat Official Account formatted HTML using AI. Default mode: AI (no API key needed). Default theme: ocean-calm (professional blue). Supports AI image generation with DashScope (z-image-turbo), auto-saves to ./output/images/. Also supports assisted writing with customizable creator styles (default: Dan Koe). Use for writing articles, converting markdown to WeChat format, or generating cover images.
 ---
 
 # MD to WeChat
 
-Converts Markdown articles to WeChat Official Account formatted HTML with inline CSS using AI-powered themed layouts. Supports three beautiful themes and AI image generation.
+Converts Markdown articles to WeChat Official Account formatted HTML with inline CSS using AI-powered themed layouts.
+
+**✅ Pre-configured**: AI mode enabled, ocean-calm theme, DashScope image generation ready.
 
 ## Quick Start
 
 ```bash
-# Preview HTML (default: ocean-calm theme)
+# Preview HTML (uses ocean-calm theme by default)
 bash skill/md2wechat/scripts/run.sh convert article.md --preview
 
-# Preview with different theme
+# Use different theme (autumn-warm / spring-fresh / ocean-calm)
 bash skill/md2wechat/scripts/run.sh convert article.md --theme autumn-warm --preview
 
-# Upload to WeChat draft box
-bash skill/md2wechat/scripts/run.sh convert article.md --draft --cover cover.jpg
+# Generate cover image (auto-saves to ./output/images/)
+bash skill/md2wechat/scripts/run.sh generate_image "Minimalist book cover, ocean blue and gold"
+
+# Generate 16:9 cover for WeChat (recommended)
+bash skill/md2wechat/scripts/run.sh generate_image --size 2560x1440 "prompt"
 ```
 
 ### Natural Language Image Generation
@@ -102,17 +107,19 @@ Users can add custom styles in `writers/` directory. See `writers/README.md` for
 
 ## Workflow Checklist
 
-Copy this checklist to track progress:
-
 ```
 Progress:
-- [ ] Step 1: Analyze Markdown structure and images
-- [ ] Step 2: Select theme (autumn-warm/spring-fresh/ocean-calm)
-- [ ] Step 3: Generate HTML with inline CSS using AI
-- [ ] Step 4: Process images (upload to WeChat)
-- [ ] Step 5: Replace image URLs in HTML
+- [ ] Step 1: Analyze Markdown structure
+- [ ] Step 2: Select theme (default: ocean-calm)
+- [ ] Step 3: Generate HTML with AI (returns prompt for Claude)
+- [ ] Step 4: Process images (AI生成→本地保存→上传微信)
+- [ ] Step 5: Replace image URLs
 - [ ] Step 6: Preview or upload to draft
 ```
+
+**Default Settings** (no need to specify):
+- Mode: `ai` (AI-powered, no API key needed)
+- Theme: `ocean-calm` (professional blue, great for tech/business)
 
 ---
 
@@ -293,12 +300,19 @@ bash skill/md2wechat/scripts/run.sh generate_image --size 2560x1440 "prompt"
 
 **Image Processing Pipeline**:
 1. If AI generation: Call DashScope API → get URL
-2. If online: Download image to temp
-3. If local: Read file
-4. Compress if width > 1920px (configurable)
-5. Upload to WeChat material API
-6. Return `wechat_url` and `media_id`
-7. Store result for HTML replacement
+2. **Save local copy** to `./output/images/{timestamp}-{keyword}.png`
+3. If online: Download image to temp
+4. If local: Read file
+5. Compress if width > 1920px (configurable)
+6. Upload to WeChat material API (if configured)
+7. Return `wechat_url` and `media_id`
+8. Store result for HTML replacement
+
+**Local Save Feature**:
+- Generated images are automatically saved to `./output/images/` directory
+- Filename format: `{timestamp}-{keyword}.png` (e.g., `20260118-113848-Minimalistbookc.png`)
+- Keyword is extracted from the prompt (max 15 alphanumeric characters)
+- Local copies are preserved even if WeChat upload fails
 
 ---
 
@@ -511,6 +525,15 @@ A story about memories...
 ## Troubleshooting
 
 ### Configuration Issues
+
+**Q: Do I need to configure anything?**
+A: No! The skill comes pre-configured:
+- ✅ AI mode enabled (no md2wechat.cn API key needed)
+- ✅ ocean-calm theme set as default
+- ✅ DashScope image generation configured
+- ✅ Images auto-save to `./output/images/`
+
+Only configure WeChat AppID/Secret if you want to upload drafts.
 
 **Q: "AppID not configured" error**
 A: Set `WECHAT_APPID` and `WECHAT_SECRET` in config file `~/.config/md2wechat/config.yaml`

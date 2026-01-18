@@ -53,12 +53,12 @@ var (
 )
 
 func init() {
-	// 添加 flags
-	convertCmd.Flags().StringVar(&convertMode, "mode", "api", "Conversion mode: api or ai")
-	convertCmd.Flags().StringVar(&convertTheme, "theme", "default", "Theme name")
-	convertCmd.Flags().StringVar(&convertAPIKey, "api-key", "", "API key for md2wechat.cn")
-	convertCmd.Flags().StringVar(&convertFontSize, "font-size", "medium", "Font size: small/medium/large (API mode only)")
-	convertCmd.Flags().StringVar(&convertCustomPrompt, "custom-prompt", "", "Custom AI prompt (AI mode only)")
+	// 添加 flags - 默认使用 AI 模式
+	convertCmd.Flags().StringVar(&convertMode, "mode", "ai", "Conversion mode: ai (API mode removed)")
+	convertCmd.Flags().StringVar(&convertTheme, "theme", "ocean-calm", "Theme name (default: ocean-calm)")
+	convertCmd.Flags().StringVar(&convertAPIKey, "api-key", "", "API key for md2wechat.cn (deprecated)")
+	convertCmd.Flags().StringVar(&convertFontSize, "font-size", "medium", "Font size: small/medium/large (deprecated)")
+	convertCmd.Flags().StringVar(&convertCustomPrompt, "custom-prompt", "", "Custom AI prompt")
 	convertCmd.Flags().StringVarP(&convertOutput, "output", "o", "", "Output HTML file path")
 	convertCmd.Flags().BoolVar(&convertPreview, "preview", false, "Preview only, do not upload images")
 	convertCmd.Flags().BoolVar(&convertUpload, "upload", false, "Upload images to WeChat and replace URLs")

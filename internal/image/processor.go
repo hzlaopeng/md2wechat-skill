@@ -3,7 +3,11 @@ package image
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/geekjourneyx/md2wechat-skill/internal/config"
 	"github.com/geekjourneyx/md2wechat-skill/internal/wechat"
@@ -169,6 +173,11 @@ func (p *Processor) GenerateAndUpload(prompt string) (*GenerateAndUploadResult, 
 	}
 	defer os.Remove(tmpPath)
 
+	// 保存到本地项目目录
+	if err := p.saveToLocal(tmpPath, prompt); err != nil {
+		p.log.Warn("failed to save local copy", zap.Error(err))
+	}
+
 	// 压缩（如果需要）
 	processedPath := tmpPath
 	if p.cfg.CompressImages {
@@ -241,6 +250,11 @@ func (p *Processor) GenerateAndUploadWithSize(prompt string, size string) (*Gene
 	}
 	defer os.Remove(tmpPath)
 
+	// 保存到本地项目目录
+	if err := p.saveToLocal(tmpPath, prompt); err != nil {
+		p.log.Warn("failed to save local copy", zap.Error(err))
+	}
+
 	// 上传到微信
 	uploadResult, err := p.ws.UploadMaterialWithRetry(tmpPath, 3)
 	if err != nil {
@@ -268,4 +282,70 @@ func (p *Processor) CompressImage(filePath string) (string, bool, error) {
 // SetCompressQuality 设置压缩质量
 func (p *Processor) SetCompressQuality(quality int) {
 	p.compressor.SetQuality(quality)
+}
+
+// saveToLocal 保存图片到本地项目目录
+func (p *Processor) saveToLocal(tmpPath, prompt string) error {
+	// 获取当前工作目录
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get working directory: %w", err)
+	}
+
+	// 创建 output 目录
+	outputDir := filepath.Join(wd, "output", "images")
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("create output directory: %w", err)
+	}
+
+	// 生成文件名: 使用时间戳 + 提示词的前几个字符
+	timestamp := time.Now().Format("20060102-150405")
+	prefix := "image"
+	if len(prompt) > 20 {
+		// 从提示词提取关键词(取前20个字符的字母数字)
+		cleanPrompt := strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+				return r
+			}
+			return -1
+		}, prompt)
+		if len(cleanPrompt) > 15 {
+			cleanPrompt = cleanPrompt[:15]
+		}
+		if cleanPrompt != "" {
+			prefix = cleanPrompt
+		}
+	}
+
+	// 确定文件扩展名
+	ext := ".png"
+	if strings.HasSuffix(tmpPath, ".jpg") || strings.HasSuffix(tmpPath, ".jpeg") {
+		ext = ".jpg"
+	}
+
+	filename := fmt.Sprintf("%s-%s%s", timestamp, prefix, ext)
+	outputPath := filepath.Join(outputDir, filename)
+
+	// 复制文件
+	src, err := os.Open(tmpPath)
+	if err != nil {
+		return fmt.Errorf("open source file: %w", err)
+	}
+	defer src.Close()
+
+	dst, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("create destination file: %w", err)
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return fmt.Errorf("copy file: %w", err)
+	}
+
+	p.log.Info("saved local copy",
+		zap.String("path", outputPath),
+		zap.String("filename", filename))
+
+	return nil
 }

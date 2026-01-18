@@ -364,10 +364,18 @@ Response:
 
 | Variable | Description | Status |
 |----------|-------------|--------|
-| `IMAGE_API_KEY` | DashScope API key for image generation | ✅ Configured |
-| `IMAGE_API_BASE` | DashScope API base URL | ✅ Configured |
+| `image_provider` | Image service provider (dashscope/tuzi/openai) | ✅ Set to dashscope |
+| `image_key` | DashScope API key for z-image-turbo model | ✅ Configured |
+| `image_base_url` | DashScope API base URL | ✅ Set to https://dashscope.aliyuncs.com/api/v1 |
+| `image_model` | Model name (z-image-turbo) | ✅ Configured |
 | `convert_mode` | Conversion mode (always `ai`) | ✅ Set to AI |
 | `default_theme` | Default theme (ocean-calm) | ✅ Set |
+
+**DashScope Image Generation:**
+- Uses `/services/aigc/multimodal-generation/generation` endpoint
+- Supports `z-image-turbo` model (fast, high quality)
+- Image size format: `"1024*1024"` (use `*` not `x`)
+- Requires API key in config file (already configured)
 
 ### How to Get AppID and Secret
 

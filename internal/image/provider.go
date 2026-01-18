@@ -50,6 +50,11 @@ func (e *GenerateError) Unwrap() error {
 // NewProvider 根据配置创建对应的 Provider
 func NewProvider(cfg *config.Config) (Provider, error) {
 	switch cfg.ImageProvider {
+	case "dashscope":
+		if err := validateDashScopeConfig(cfg); err != nil {
+			return nil, err
+		}
+		return NewDashScopeProvider(cfg)
 	case "tuzi":
 		if err := validateTuZiConfig(cfg); err != nil {
 			return nil, err
@@ -64,7 +69,7 @@ func NewProvider(cfg *config.Config) (Provider, error) {
 		return nil, &config.ConfigError{
 			Field:   "ImageProvider",
 			Message: fmt.Sprintf("未知的图片服务提供者: %s", cfg.ImageProvider),
-			Hint:    "支持的提供者: openai, tuzi",
+			Hint:    "支持的提供者: openai, tuzi, dashscope",
 		}
 	}
 }
@@ -83,6 +88,25 @@ func validateOpenAIConfig(cfg *config.Config) error {
 			Field:   "ImageAPIBase",
 			Message: "需要配置 API Base URL",
 			Hint:    "在配置文件中设置 api.image_base_url 或使用默认值",
+		}
+	}
+	return nil
+}
+
+// validateDashScopeConfig 验证 DashScope 配置
+func validateDashScopeConfig(cfg *config.Config) error {
+	if cfg.ImageAPIKey == "" {
+		return &config.ConfigError{
+			Field:   "ImageAPIKey",
+			Message: "使用 DashScope 图片服务需要配置 API Key",
+			Hint:    "在配置文件中设置 api.image_key 或环境变量 IMAGE_API_KEY",
+		}
+	}
+	if cfg.ImageAPIBase == "" {
+		return &config.ConfigError{
+			Field:   "ImageAPIBase",
+			Message: "需要配置 DashScope API Base URL",
+			Hint:    "在配置文件中设置 api.image_base_url，通常为 https://dashscope.aliyuncs.com/api/v1",
 		}
 	}
 	return nil
